@@ -1,0 +1,1054 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario de Motos</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.25/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --color-rojo: #D32F2F;
+            --color-rojo-oscuro: #B71C1C;
+            --color-blanco: #FFFFFF;
+            --color-negro: #212121;
+            --color-gris: #F5F5F5;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: var(--color-gris);
+            color: var(--color-negro);
+            line-height: 1.6;
+            padding-top: 10px;
+        }
+        
+        .logo-container {
+            position: relative;
+            display: flex;
+            justify-content: center;
+            margin-top: 5px;
+            z-index: 50;
+        }
+        
+        .logo {
+            width: 80px;
+            height: 80px;
+            border-radius: 50%;
+            border: 3px solid var(--color-blanco);
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            background-color: var(--color-blanco);
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo img {
+            width: 80%;
+            height: 80%;
+            object-fit: contain;
+        }
+        
+        header {
+            background-color: var(--color-rojo);
+            color: var(--color-blanco);
+            padding: 10px;
+            text-align: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            margin-top: -25px;
+        }
+        
+        .container {
+            width: 90%;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        
+        .fecha {
+            font-size: 1rem;
+            opacity: 0.9;
+        }
+        
+        .acciones {
+            display: flex;
+            justify-content: space-between;
+            margin: 20px 0;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .btn {
+            background-color: var(--color-rojo);
+            color: var(--color-blanco);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        
+        .btn:hover {
+            background-color: var(--color-rojo-oscuro);
+        }
+        
+        .btn-pdf {
+            background-color: #F44336;
+        }
+        
+        .btn-detalles {
+            background-color: #2196F3;
+        }
+        
+        .btn-detalles:hover {
+            background-color: #0b7dda;
+        }
+        
+        .search-box {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            width: 250px;
+        }
+        
+        .filtros {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filtro-select {
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-width: 180px;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            background-color: var(--color-blanco);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+        
+        th {
+            background-color: var(--color-rojo);
+            color: var(--color-blanco);
+            font-weight: bold;
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background-color: rgba(211, 47, 47, 0.05);
+        }
+        
+        .estado-badge {
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            text-align: center;
+            display: inline-block;
+        }
+        
+        .pendiente {
+            background-color: #FFF3CD;
+            color: #856404;
+        }
+        
+        .apartada {
+            background-color: #D1ECF1;
+            color: #0C5460;
+        }
+        
+        .facturada {
+            background-color: #D4EDDA;
+            color: #155724;
+        }
+        
+        .nota-entrega {
+            background-color: #E2E3E5;
+            color: #383D41;
+        }
+        
+        .acciones-btn {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .btn-editar {
+            background-color: #FFC107;
+            color: var(--color-negro);
+        }
+        
+        .btn-editar:hover {
+            background-color: #FFA000;
+        }
+        
+        .btn-eliminar {
+            background-color: #F44336;
+        }
+        
+        .btn-eliminar:hover {
+            background-color: #D32F2F;
+        }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            overflow-y: auto;
+            padding: 20px 0;
+        }
+        
+        .modal-contenido {
+            background-color: var(--color-blanco);
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            width: 90%;
+            max-width: 700px;
+            margin: auto;
+        }
+        
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--color-rojo);
+            padding-bottom: 10px;
+        }
+        
+        .cerrar {
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--color-negro);
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+        
+        .form-grupo {
+            margin-bottom: 20px;
+        }
+        
+        .form-grupo-full {
+            grid-column: span 2;
+        }
+        
+        .form-grupo label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-grupo input, .form-grupo select, .form-grupo textarea {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        
+        .form-grupo textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+        
+        .detalles-lista {
+            margin-top: 10px;
+            padding-left: 20px;
+        }
+        
+        .detalles-lista li {
+            margin-bottom: 5px;
+            padding: 5px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border-left: 3px solid var(--color-rojo);
+        }
+        
+        .form-botones {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .btn-cancelar {
+            background-color: #9E9E9E;
+        }
+        
+        .btn-cancelar:hover {
+            background-color: #757575;
+        }
+        
+        .mensaje {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            text-align: center;
+            display: none;
+        }
+        
+        .exito {
+            background-color: #E8F5E9;
+            color: #2E7D32;
+            border: 1px solid #C8E6C9;
+        }
+        
+        .error {
+            background-color: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #FFCDD2;
+        }
+        
+        .badge-salio {
+            background-color: #F8D7DA;
+            color: #721C24;
+        }
+        
+        .badge-empresa {
+            background-color: #D4EDDA;
+            color: #155724;
+        }
+        
+        @media (max-width: 768px) {
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .form-grupo-full {
+                grid-column: span 1;
+            }
+            
+            .acciones {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            
+            .filtros {
+                flex-direction: column;
+            }
+            
+            .search-box {
+                width: 100%;
+            }
+            
+            th, td {
+                padding: 8px 5px;
+                font-size: 0.85rem;
+            }
+            
+            .acciones-btn {
+                flex-direction: column;
+                gap: 5px;
+            }
+        }
+
+        /* Estilos para la numeración y columna de detalles */
+th:nth-child(1), td:nth-child(1) {
+    width: 50px;
+    text-align: center;
+}
+
+.detalles-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.detalles-cell:hover {
+    white-space: normal;
+    overflow: visible;
+    position: relative;
+    z-index: 10;
+    background: white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+/* Estilos para el textarea en el modal */
+textarea {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    resize: vertical;
+    min-height: 80px;
+    font-family: inherit;
+}
+
+/* Mejoras responsivas para móviles */
+@media (max-width: 768px) {
+    th:nth-child(1), td:nth-child(1) {
+        display: none;
+    }
+    
+    .detalles-cell {
+        max-width: 100px;
+        font-size: 0.8rem;
+    }
+    
+    /* Ocultar algunas columnas en móviles */
+    th:nth-child(3), td:nth-child(3), /* Color */
+    th:nth-child(5), td:nth-child(5) { /* Cliente */
+        display: none;
+    }
+}
+
+@media (max-width: 480px) {
+    /* Ocultar más columnas en pantallas muy pequeñas */
+    th:nth-child(4), td:nth-child(4), /* Nombre Moto */
+    th:nth-child(7), td:nth-child(7) { /* Ubicación */
+        display: none;
+    }
+    
+    .detalles-cell {
+        max-width: 80px;
+    }
+}
+    </style>
+</head>
+<body>
+    <div class="logo-container">
+        <div class="logo">
+            <img src="haojin-logo-png_seeklogo-263373 (1).png" alt="Logo Haojin">
+        </div>
+    </div>
+    
+    <header>
+        <div class="container">
+            <h1>INVENTARIO DE MOTOS</h1>
+            <div class="fecha" id="fecha-actual">FECHA: 04/09/25</div>
+        </div>
+    </header>
+    
+    <main class="container">
+        <div class="mensaje" id="mensaje"></div>
+        
+        <div class="acciones">
+            <button class="btn" id="btn-agregar">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8 4a.5.5 0 0 1 .5.5v3h3a.5.5 0 0 1 0 1h-3v3a.5.5 0 0 1-1 0v-3h-3a.5.5 0 0 1 0-1h3v-3A.5.5 0 0 1 8 4z"/>
+                </svg>
+                Agregar Moto
+            </button>
+            
+            <button class="btn btn-pdf" id="btn-generar-pdf">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M8.5 6.5a.5.5 0 0 0-1 0v3.793L6.354 9.146a.5.5 0 1 0-.708.708l2 2a.5.5 0 0 0 .708 0l2-2a.5.5 0 0 0-.708-.708L8.5 10.293V6.5z"/>
+                    <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2zM9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5v2z"/>
+                </svg>
+                Generar PDF
+            </button>
+            
+            <input type="text" class="search-box" id="buscar" placeholder="Buscar moto...">
+        </div>
+        
+        <div class="filtros">
+            <select class="filtro-select" id="filtro-estado">
+                <option value="">Todos los estados</option>
+                <option value="pendiente">Pendiente</option>
+                <option value="apartada">Apartada</option>
+                <option value="facturada">Facturada</option>
+                <option value="nota-entrega">Nota de entrega</option>
+            </select>
+            
+            <select class="filtro-select" id="filtro-ubicacion">
+                <option value="">Todas las ubicaciones</option>
+                <option value="empresa">En empresa</option>
+                <option value="salio">Salió de empresa</option>
+            </select>
+        </div>
+        
+        <table id="tabla-inventario">
+            <thead>
+                <tr>
+                    <th>N°</th>
+                    <th>N° Chasis</th>
+                    <th>Nombre Moto</th>
+                    <th>Color</th>
+                    <th>Cliente</th>
+                    <th>Estado</th>
+                    <th>Ubicación</th>
+                    <th>Detalles</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody id="cuerpo-tabla">
+                <!-- Los datos se cargarán aquí mediante JavaScript -->
+            </tbody>
+        </table>
+    </main>
+    
+    <!-- Modal para agregar/editar motos -->
+    <div class="modal" id="modal-moto">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2 id="modal-titulo">Agregar Nueva Moto</h2>
+                <span class="cerrar" id="cerrar-modal">&times;</span>
+            </div>
+            
+            <form id="form-moto">
+                <input type="hidden" id="moto-id">
+                
+                <div class="form-grid">
+                    <div class="form-grupo">
+                        <label for="chasis">Número de Chasis *</label>
+                        <input type="text" id="chasis" required>
+                    </div>
+                    
+                    <div class="form-grupo">
+                        <label for="nombre-moto">Nombre de la Moto *</label>
+                        <input type="text" id="nombre-moto" required>
+                    </div>
+                    
+                    <div class="form-grupo">
+                        <label for="color">Color *</label>
+                        <input type="text" id="color" required>
+                    </div>
+                    
+                    <div class="form-grupo">
+                        <label for="cliente">Nombre del Cliente *</label>
+                        <input type="text" id="cliente" required>
+                    </div>
+                    
+                    <div class="form-grupo">
+                        <label for="estado">Estado *</label>
+                        <select id="estado" required>
+                            <option value="">Seleccione un estado</option>
+                            <option value="pendiente">Pendiente</option>
+                            <option value="apartada">Apartada</option>
+                            <option value="facturada">Facturada</option>
+                            <option value="nota-entrega">Nota de entrega</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-grupo">
+                        <label for="ubicacion">Ubicación *</label>
+                        <select id="ubicacion" required>
+                            <option value="">Seleccione ubicación</option>
+                            <option value="empresa">En empresa</option>
+                            <option value="salio">Salió de empresa</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-grupo form-grupo-full">
+                        <label for="detalles">Detalles (opcional)</label>
+                        <textarea id="detalles" rows="3" placeholder="Ingrese detalles adicionales sobre la moto"></textarea>
+                        <div id="detalles-preview" class="detalles-lista" style="display: none;">
+                            <h4>Vista previa de detalles:</h4>
+                            <ol id="lista-detalles"></ol>
+                        </div>
+                        
+                    </div>
+                </div>
+                
+                <div class="form-botones">
+                    <button type="button" class="btn btn-cancelar" id="cancelar-form">Cancelar</button>
+                    <button type="submit" class="btn">Guardar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Modal para ver detalles -->
+    <div class="modal" id="modal-detalles">
+        <div class="modal-contenido">
+            <div class="modal-header">
+                <h2 id="modal-titulo-detalles">Detalles de la Moto</h2>
+                <span class="cerrar" id="cerrar-modal-detalles">&times;</span>
+            </div>
+            
+            <div id="contenido-detalles">
+                <h3 id="detalles-moto-titulo"></h3>
+                <h4>Detalles:</h4>
+                <ol id="lista-detalles-completa"></ol>
+            </div>
+            
+            <div class="form-botones">
+                <button type="button" class="btn btn-cancelar" id="cerrar-detalles">Cerrar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Almacenamiento de datos (simulando una base de datos)
+        let inventarioMotos = JSON.parse(localStorage.getItem('inventarioMotos')) || [];
+        let editingId = null;
+        
+        // Elementos DOM
+        const cuerpoTabla = document.getElementById('cuerpo-tabla');
+        const modalMoto = document.getElementById('modal-moto');
+        const modalDetalles = document.getElementById('modal-detalles');
+        const formMoto = document.getElementById('form-moto');
+        const modalTitulo = document.getElementById('modal-titulo');
+        const modalTituloDetalles = document.getElementById('modal-titulo-detalles');
+        const motoIdInput = document.getElementById('moto-id');
+        const chasisInput = document.getElementById('chasis');
+        const nombreMotoInput = document.getElementById('nombre-moto');
+        const colorInput = document.getElementById('color');
+        const clienteInput = document.getElementById('cliente');
+        const estadoSelect = document.getElementById('estado');
+        const ubicacionSelect = document.getElementById('ubicacion');
+        const detallesTextarea = document.getElementById('detalles');
+        const detallesPreview = document.getElementById('detalles-preview');
+        const listaDetalles = document.getElementById('lista-detalles');
+        const detallesMotoTitulo = document.getElementById('detalles-moto-titulo');
+        const listaDetallesCompleta = document.getElementById('lista-detalles-completa');
+        const btnAgregar = document.getElementById('btn-agregar');
+        const btnGenerarPdf = document.getElementById('btn-generar-pdf');
+        const cerrarModal = document.getElementById('cerrar-modal');
+        const cerrarModalDetalles = document.getElementById('cerrar-modal-detalles');
+        const cerrarDetalles = document.getElementById('cerrar-detalles');
+        const cancelarForm = document.getElementById('cancelar-form');
+        const buscarInput = document.getElementById('buscar');
+        const filtroEstado = document.getElementById('filtro-estado');
+        const filtroUbicacion = document.getElementById('filtro-ubicacion');
+        const mensajeDiv = document.getElementById('mensaje');
+        const fechaActual = document.getElementById('fecha-actual');
+        
+        // Establecer fecha actual
+        const hoy = new Date();
+        fechaActual.textContent = `FECHA: ${hoy.getDate().toString().padStart(2, '0')}/${(hoy.getMonth()+1).toString().padStart(2, '0')}/${hoy.getFullYear()}`;
+        
+        // Mostrar vista previa de detalles
+        detallesTextarea.addEventListener('input', function() {
+            const lineas = this.value.split('\n').filter(linea => linea.trim() !== '');
+            
+            if (lineas.length > 0) {
+                listaDetalles.innerHTML = '';
+                lineas.forEach((linea, index) => {
+                    const li = document.createElement('li');
+                    li.textContent = linea;
+                    listaDetalles.appendChild(li);
+                });
+                detallesPreview.style.display = 'block';
+            } else {
+                detallesPreview.style.display = 'none';
+            }
+        });
+        
+// En la función mostrarInventario, modificar para incluir numeración y detalles
+function mostrarInventario(motos = inventarioMotos) {
+    cuerpoTabla.innerHTML = '';
+    
+    if (motos.length === 0) {
+        cuerpoTabla.innerHTML = '<tr><td colspan="9" style="text-align: center;">No hay motos en el inventario</td></tr>';
+        return;
+    }
+    
+    motos.forEach((moto, index) => {
+        const fila = document.createElement('tr');
+        
+        // Determinar clase CSS según el estado
+        let estadoClase = '';
+        let estadoTexto = '';
+        switch(moto.estado) {
+            case 'pendiente':
+                estadoClase = 'pendiente';
+                estadoTexto = 'Pendiente';
+                break;
+            case 'apartada':
+                estadoClase = 'apartada';
+                estadoTexto = 'Apartada';
+                break;
+            case 'facturada':
+                estadoClase = 'facturada';
+                estadoTexto = 'Facturada';
+                break;
+            case 'nota-entrega':
+                estadoClase = 'nota-entrega';
+                estadoTexto = 'Nota de entrega';
+                break;
+        }
+        
+        // Determinar clase CSS según la ubicación
+        let ubicacionClase = moto.ubicacion === 'empresa' ? 'badge-empresa' : 'badge-salio';
+        let ubicacionTexto = moto.ubicacion === 'empresa' ? 'En empresa' : 'Salió';
+        
+        // Mostrar detalles (truncar si es muy largo)
+        const detalles = moto.detalles || '';
+        const detallesCortos = detalles.length > 50 ? detalles.substring(0, 47) + '...' : detalles;
+        
+        fila.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${moto.chasis}</td>
+            <td>${moto.nombreMoto}</td>
+            <td>${moto.color}</td>
+            <td>${moto.cliente}</td>
+            <td><span class="estado-badge ${estadoClase}">${estadoTexto}</span></td>
+            <td><span class="estado-badge ${ubicacionClase}">${ubicacionTexto}</span></td>
+            <td class="detalles-cell" title="${detalles}">${detallesCortos}</td>
+            <td>
+                <div class="acciones-btn">
+                    <button class="btn btn-editar" data-id="${moto.id}">Editar</button>
+                    <button class="btn btn-eliminar" data-id="${moto.id}">Eliminar</button>
+                </div>
+            </td>
+        `;
+        cuerpoTabla.appendChild(fila);
+    });
+    
+       // Agregar event listeners a los botones
+            document.querySelectorAll('.btn-editar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    editarMoto(id);
+                });
+            });
+            
+            document.querySelectorAll('.btn-detalles').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    verDetalles(id);
+                });
+            });
+            
+            document.querySelectorAll('.btn-eliminar').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const id = e.target.getAttribute('data-id');
+                    eliminarMoto(id);
+                });
+            }); 
+}
+            
+        
+        
+        // Abrir modal para agregar moto
+        btnAgregar.addEventListener('click', () => {
+            editingId = null;
+            modalTitulo.textContent = 'Agregar Nueva Moto';
+            formMoto.reset();
+            motoIdInput.value = '';
+            detallesPreview.style.display = 'none';
+            modalMoto.style.display = 'flex';
+        });
+        
+        // Cerrar modales
+        cerrarModal.addEventListener('click', () => {
+            modalMoto.style.display = 'none';
+        });
+        
+        cerrarModalDetalles.addEventListener('click', () => {
+            modalDetalles.style.display = 'none';
+        });
+        
+        cerrarDetalles.addEventListener('click', () => {
+            modalDetalles.style.display = 'none';
+        });
+        
+        cancelarForm.addEventListener('click', () => {
+            modalMoto.style.display = 'none';
+        });
+        
+        // Cerrar modal al hacer clic fuera del contenido
+        window.addEventListener('click', (e) => {
+            if (e.target === modalMoto) {
+                modalMoto.style.display = 'none';
+            }
+            if (e.target === modalDetalles) {
+                modalDetalles.style.display = 'none';
+            }
+        });
+        
+        // Manejar envío del formulario
+        formMoto.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+    
+            const chasis = chasisInput.value.trim();
+            const nombreMoto = nombreMotoInput.value.trim();
+            const color = colorInput.value.trim();
+            const cliente = clienteInput.value.trim();
+            const estado = estadoSelect.value;
+            const ubicacion = ubicacionSelect.value;
+            const detalles = document.getElementById('detalles').value.trim();
+            
+            if (!chasis || !nombreMoto || !color || !cliente || !estado || !ubicacion) {
+                mostrarMensaje('Por favor, complete todos los campos obligatorios', 'error');
+                return;
+            }
+            
+            if (editingId) {
+                // Editar moto existente
+                const index = inventarioMotos.findIndex(m => m.id === editingId);
+                if (index !== -1) {
+                    inventarioMotos[index] = { 
+                        ...inventarioMotos[index], 
+                        chasis, 
+                        nombreMoto, 
+                        color, 
+                        cliente, 
+                        estado, 
+                        ubicacion,
+                        detalles
+                    };
+                    guardarEnLocalStorage();
+                    mostrarMensaje('Moto actualizada correctamente', 'exito');
+                }
+            } else {
+                // Agregar nueva moto
+                // Verificar si el número de chasis ya existe
+                if (inventarioMotos.some(m => m.chasis === chasis)) {
+                    mostrarMensaje('El número de chasis ya existe en el inventario', 'error');
+                    return;
+                }
+                
+                const nuevaMoto = {
+                    id: Date.now().toString(),
+                    chasis,
+                    nombreMoto,
+                    color,
+                    cliente,
+                    estado,
+                    ubicacion,
+                    detalles
+                };
+                
+                inventarioMotos.push(nuevaMoto);
+                guardarEnLocalStorage();
+                mostrarMensaje('Moto agregada correctamente', 'exito');
+            }
+            
+            modalMoto.style.display = 'none';
+            aplicarFiltros();
+            formMoto.reset();
+        });
+        
+        // Editar moto
+        function editarMoto(id) {
+            const moto = inventarioMotos.find(m => m.id === id);
+            if (moto) {
+                editingId = id;
+                modalTitulo.textContent = 'Editar Moto';
+                chasisInput.value = moto.chasis;
+                nombreMotoInput.value = moto.nombreMoto;
+                colorInput.value = moto.color;
+                clienteInput.value = moto.cliente;
+                estadoSelect.value = moto.estado;
+                ubicacionSelect.value = moto.ubicacion;
+                document.getElementById('detalles').value = moto.detalles || '';
+                
+                // Mostrar vista previa de detalles si existen
+                if (moto.detalles && moto.detalles.length > 0) {
+                    listaDetalles.innerHTML = '';
+                    moto.detalles.forEach(detalle => {
+                        const li = document.createElement('li');
+                        li.textContent = detalle;
+                        listaDetalles.appendChild(li);
+                    });
+                    detallesPreview.style.display = 'block';
+                } else {
+                    detallesPreview.style.display = 'none';
+                }
+                
+                motoIdInput.value = moto.id;
+                modalMoto.style.display = 'flex';
+            }
+        }
+        
+        // Ver detalles de la moto
+        function verDetalles(id) {
+            const moto = inventarioMotos.find(m => m.id === id);
+            if (moto) {
+                modalTituloDetalles.textContent = `Detalles de ${moto.nombreMoto}`;
+                detallesMotoTitulo.textContent = `${moto.nombreMoto} - ${moto.chasis}`;
+                
+                listaDetallesCompleta.innerHTML = '';
+                if (moto.detalles && moto.detalles.length > 0) {
+                    moto.detalles.forEach(detalle => {
+                        const li = document.createElement('li');
+                        li.textContent = detalle;
+                        listaDetallesCompleta.appendChild(li);
+                    });
+                } else {
+                    const li = document.createElement('li');
+                    li.textContent = 'No hay detalles registrados para esta moto';
+                    listaDetallesCompleta.appendChild(li);
+                }
+                
+                modalDetalles.style.display = 'flex';
+            }
+        }
+        
+        // Eliminar moto
+        function eliminarMoto(id) {
+            if (confirm('¿Está seguro de que desea eliminar esta moto?')) {
+                inventarioMotos = inventarioMotos.filter(m => m.id !== id);
+                guardarEnLocalStorage();
+                mostrarMensaje('Moto eliminada correctamente', 'exito');
+                aplicarFiltros();
+            }
+        }
+        
+        // Buscar motos
+        buscarInput.addEventListener('input', aplicarFiltros);
+        
+        // Filtrar por estado
+        filtroEstado.addEventListener('change', aplicarFiltros);
+        
+        // Filtrar por ubicación
+        filtroUbicacion.addEventListener('change', aplicarFiltros);
+        
+        // Aplicar todos los filtros
+        function aplicarFiltros() {
+            const termino = buscarInput.value.toLowerCase().trim();
+            const estado = filtroEstado.value;
+            const ubicacion = filtroUbicacion.value;
+            
+            let motosFiltradas = inventarioMotos;
+            
+            // Aplicar filtro de búsqueda
+            if (termino !== '') {
+                motosFiltradas = motosFiltradas.filter(moto => 
+                    moto.chasis.toLowerCase().includes(termino) || 
+                    moto.nombreMoto.toLowerCase().includes(termino) ||
+                    moto.color.toLowerCase().includes(termino) ||
+                    moto.cliente.toLowerCase().includes(termino)
+                );
+            }
+            
+            // Aplicar filtro de estado
+            if (estado !== '') {
+                motosFiltradas = motosFiltradas.filter(moto => moto.estado === estado);
+            }
+            
+            // Aplicar filtro de ubicación
+            if (ubicacion !== '') {
+                motosFiltradas = motosFiltradas.filter(moto => moto.ubicacion === ubicacion);
+            }
+            
+            mostrarInventario(motosFiltradas);
+        }
+        
+        // Guardar en localStorage
+        function guardarEnLocalStorage() {
+            localStorage.setItem('inventarioMotos', JSON.stringify(inventarioMotos));
+        }
+        
+        // Mostrar mensajes
+        function mostrarMensaje(texto, tipo) {
+            mensajeDiv.textContent = texto;
+            mensajeDiv.className = `mensaje ${tipo}`;
+            mensajeDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                mensajeDiv.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Generar PDF
+        btnGenerarPdf.addEventListener('click', generarPDF);
+        
+        function generarPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            // Título
+            doc.setFontSize(20);
+            doc.setTextColor(40, 40, 40);
+            doc.text('INVENTARIO DE MOTOS', 105, 15, { align: 'center' });
+            
+            // Fecha
+            doc.setFontSize(12);
+            doc.text(`Fecha: ${fechaActual.textContent.replace('FECHA: ', '')}`, 105, 22, { align: 'center' });
+            
+            // Tabla
+            const tableColumn = ["N°","Chasis", "Nombre", "Color", "Cliente", "Estado", "Ubicación", "Detalles"];
+            const tableRows = [];
+            
+            inventarioMotos.forEach(moto => {
+                let estadoTexto = '';
+                switch(moto.estado) {
+                    case 'pendiente': estadoTexto = 'Pendiente'; break;
+                    case 'apartada': estadoTexto = 'Apartada'; break;
+                    case 'facturada': estadoTexto = 'Facturada'; break;
+                    case 'nota-entrega': estadoTexto = 'Nota de entrega'; break;
+                }
+                
+                let ubicacionTexto = moto.ubicacion === 'empresa' ? 'En empresa' : 'Salió';
+                
+                const motoData = [
+
+                    moto.chasis,
+                    moto.nombreMoto,
+                    moto.color,
+                    moto.cliente,
+                    estadoTexto,
+                    ubicacionTexto,
+                    moto.detalles || ''
+                ];
+                tableRows.push(motoData);
+            });
+            
+            // Generar PDF
+            doc.autoTable({
+                head: [tableColumn],
+                body: tableRows,
+                startY: 30,
+                theme: 'grid',
+                styles: {
+                    fontSize: 9,
+                    cellPadding: 2,
+                    fillColor: [211, 47, 47]
+                },
+                headStyles: {
+                    fillColor: [211, 47, 47],
+                    textColor: [255, 255, 255],
+                    fontStyle: 'bold'
+                },
+                alternateRowStyles: {
+                    fillColor: [240, 240, 240]
+                }
+            });
+            
+            // Guardar PDF
+            const fecha = new Date();
+            const fechaStr = `${fecha.getDate()}-${fecha.getMonth()+1}-${fecha.getFullYear()}`;
+            doc.save(`inventario_motos_${fechaStr}.pdf`);
+        }
+        
+        // Inicializar la aplicación
+        mostrarInventario();
+    </script>
+</body>
+</html>
